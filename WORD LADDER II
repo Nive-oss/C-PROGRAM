@@ -1,0 +1,88 @@
+#include <vector>
+#include <string>
+#include <unordered_set>
+#include <unordered_map>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+class Solution {
+    unordered_map<string, vector<string>> adj; // To store the shortest path DAG
+    vector<vector<string>> results;
+    vector<string> path;
+
+public:
+    vector<vector<string>> findLadders(string beginWord, string endWord, vector<string>& wordList) {
+        unordered_set<string> dict(wordList.begin(), wordList.end());
+        if (dict.find(endWord) == dict.end()) return {};
+
+        // 1. BFS to find the shortest distance and build the DAG
+        unordered_map<string, int> distance;
+        queue<string> q;
+        
+        q.push(beginWord);
+        distance[beginWord] = 0;
+        dict.erase(beginWord);
+
+        bool found = false;
+        while (!q.empty()) {
+            int size = q.size();
+            unordered_set<string> visitedThisLevel;
+            
+            for (int i = 0; i < size; i++) {
+                string curr = q.front();
+                q.pop();
+
+                string temp = curr;
+                for (int j = 0; j < temp.size(); j++) {
+                    char originalChar = temp[j];
+                    for (char c = 'a'; c <= 'z'; c++) {
+                        temp[j] = c;
+                        if (dict.count(temp)) {
+                            // If first time visiting this word at this distance
+                            if (distance.find(temp) == distance.end()) {
+                                distance[temp] = distance[curr] + 1;
+                                q.push(temp);
+                                visitedThisLevel.insert(temp);
+                            }
+                            
+                            // If this is a shortest path to 'temp'
+                            if (distance[temp] == distance[curr] + 1) {
+                                adj[curr].push_back(temp);
+                            }
+                            
+                            if (temp == endWord) found = true;
+                        }
+                    }
+                    temp[j] = originalChar;
+                }
+            }
+            // Remove words visited at this level from dict to ensure shortest path
+            for (auto& word : visitedThisLevel) dict.erase(word);
+            if (found) break; 
+        }
+
+        // 2. DFS to reconstruct all paths
+        if (found) {
+            path.push_back(beginWord);
+            dfs(beginWord, endWord);
+        }
+        
+        return results;
+    }
+
+private:
+    void dfs(string& curr, string& endWord) {
+        if (curr == endWord) {
+            results.push_back(path);
+            return;
+        }
+        
+        for (string& next : adj[curr]) {
+            path.push_back(next);
+            dfs(next, endWord);
+            path.pop_back(); // Backtrack
+        }
+    }
+};
