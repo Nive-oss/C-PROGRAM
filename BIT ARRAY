@@ -1,0 +1,42 @@
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+
+int main() {
+  
+
+
+    unsigned int N, S, P, Q;
+    if (!(cin >> N >> S >> P >> Q)) return 0;
+
+    
+    static unsigned int bitset[1 << 26];
+    unsigned int mod = 1u << 31;
+    unsigned int mask = mod - 1;
+
+    unsigned int current = S & mask;
+    unsigned int count = 0;
+
+    for (unsigned int i = 0; i < N; ++i) {
+        
+        if (!(bitset[current >> 5] & (1u << (current & 31)))) {
+            bitset[current >> 5] |= (1u << (current & 31));
+            count++;
+        } else {
+            
+            break;
+        }
+        
+        current = (1ULL * current * P + Q) & mask;
+    }
+
+    cout << count << endl;
+
+    
+  
+    return 0;
+}
