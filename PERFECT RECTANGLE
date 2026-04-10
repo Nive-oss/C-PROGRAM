@@ -1,0 +1,55 @@
+#include <vector>
+#include <set>
+#include <string>
+#include <climits>
+#include <algorithm>
+
+using namespace std;
+
+class Solution {
+public:
+    bool isRectangleCover(vector<vector<int>>& rectangles) {
+        // Use a set to track corners. If a corner appears twice, we remove it.
+        // At the end, only the 4 corners of the big rectangle should remain.
+        set<pair<int, int>> corners;
+        long long totalArea = 0;
+        
+        int minX = INT_MAX, minY = INT_MAX;
+        int maxX = INT_MIN, maxY = INT_MIN;
+
+        for (const auto& rect : rectangles) {
+            int x1 = rect[0], y1 = rect[1], x2 = rect[2], y2 = rect[3];
+
+            // Update bounding box boundaries
+            minX = min(minX, x1);
+            minY = min(minY, y1);
+            maxX = max(maxX, x2);
+            maxY = max(maxY, y2);
+
+            // Add to total area
+            totalArea += (long long)(x2 - x1) * (y2 - y1);
+
+            // Process the 4 corners of the current rectangle
+            vector<pair<int, int>> currCorners = {{x1, y1}, {x1, y2}, {x2, y1}, {x2, y2}};
+            for (auto& p : currCorners) {
+                if (corners.count(p)) {
+                    corners.erase(p); // Even count: corner is internal
+                } else {
+                    corners.insert(p); // Odd count: potentially an external corner
+                }
+            }
+        }
+
+        // Check 1: The 4 corners left must be the corners of the bounding box
+        if (corners.size() != 4 || 
+            !corners.count({minX, minY}) || !corners.count({minX, maxY}) || 
+            !corners.count({maxX, minY}) || !corners.count({maxX, maxY})) {
+            return false;
+        }
+
+        // Check 2: Total area must match the bounding box area
+        long long boundingBoxArea = (long long)(maxX - minX) * (maxY - minY);
+        
+        return totalArea == boundingBoxArea;
+    }
+};
