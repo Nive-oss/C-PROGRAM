@@ -1,0 +1,45 @@
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+class Solution {
+public:
+    int maxSumSubmatrix(vector<vector<int>>& matrix, int k) {
+        int rows = matrix.size(), cols = matrix[0].size();
+        int res = INT_MIN;
+
+        // Optimization: Ensure we iterate the outer loops over the smaller dimension
+        bool rowIsSmaller = rows < cols;
+        int outerMax = rowIsSmaller ? rows : cols;
+        int innerMax = rowIsSmaller ? cols : rows;
+
+        for (int i = 0; i < outerMax; ++i) {
+            // sums[j] stores the accumulated sum of elements between outer index i and j
+            vector<int> sums(innerMax, 0);
+            for (int j = i; j < outerMax; ++j) {
+                for (int m = 0; m < innerMax; ++m) {
+                    sums[m] += rowIsSmaller ? matrix[j][m] : matrix[m][j];
+                }
+
+                // Find max subarray sum <= k in 'sums' 1D array
+                set<int> prefixSums = {0};
+                int currentPrefixSum = 0;
+                for (int sum : sums) {
+                    currentPrefixSum += sum;
+                    // We need: currentPrefixSum - prevPrefixSum <= k
+                    // So: prevPrefixSum >= currentPrefixSum - k
+                    auto it = prefixSums.lower_bound(currentPrefixSum - k);
+                    if (it != prefixSums.end()) {
+                        res = max(res, currentPrefixSum - *it);
+                    }
+                    prefixSums.insert(currentPrefixSum);
+                    if (res == k) return k; // Found the best possible result
+                }
+            }
+        }
+        return res;
+    }
+};
