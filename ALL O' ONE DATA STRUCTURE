@@ -1,0 +1,74 @@
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <list>
+
+using namespace std;
+
+class AllOne {
+    struct Node {
+        int count;
+        unordered_set<string> keys;
+    };
+
+    list<Node> nodeList; // Doubly linked list of nodes sorted by count
+    unordered_map<string, list<Node>::iterator> keyToNode;
+
+public:
+    AllOne() {}
+
+    void inc(string key) {
+        if (keyToNode.find(key) == keyToNode.end()) {
+            // Case 1: Key is new. Insert it into a node with count 1.
+            if (nodeList.empty() || nodeList.front().count > 1) {
+                nodeList.push_front({1, {key}});
+            } else {
+                nodeList.front().keys.insert(key);
+            }
+            keyToNode[key] = nodeList.begin();
+        } else {
+            // Case 2: Key exists. Move it to a node with count + 1.
+            auto currNode = keyToNode[key];
+            auto nextNode = next(currNode);
+            int newCount = currNode->count + 1;
+
+            if (nextNode == nodeList.end() || nextNode->count > newCount) {
+                nextNode = nodeList.insert(nextNode, {newCount, {key}});
+            } else {
+                nextNode->keys.insert(key);
+            }
+            
+            keyToNode[key] = nextNode;
+            currNode->keys.erase(key);
+            if (currNode->keys.empty()) nodeList.erase(currNode);
+        }
+    }
+
+    void dec(string key) {
+        auto currNode = keyToNode[key];
+        int newCount = currNode->count - 1;
+
+        if (newCount == 0) {
+            keyToNode.erase(key);
+        } else {
+            auto prevNode = prev(currNode);
+            if (currNode == nodeList.begin() || prevNode->count < newCount) {
+                prevNode = nodeList.insert(currNode, {newCount, {key}});
+            } else {
+                prevNode->keys.insert(key);
+            }
+            keyToNode[key] = prevNode;
+        }
+
+        currNode->keys.erase(key);
+        if (currNode->keys.empty()) nodeList.erase(currNode);
+    }
+
+    string getMaxKey() {
+        return nodeList.empty() ? "" : *nodeList.back().keys.begin();
+    }
+
+    string getMinKey() {
+        return nodeList.empty() ? "" : *nodeList.front().keys.begin();
+    }
+};
